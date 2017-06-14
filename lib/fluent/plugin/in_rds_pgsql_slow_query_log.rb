@@ -196,8 +196,10 @@ class Fluent::RdsPgsqlLogInput < Fluent::Input
           record["message"] << "\n" + raw_record unless record.nil?
         else
           # emit before record
-          Fluent::Engine.emit(@tag, Fluent::Engine.now, record) unless record.nil?
-
+          unless record.nil?
+            time = record.delete('time')
+            router.emit(@tag, DateTime.parse(time).to_i, record)
+          end
           # set a record
           record = {
             "time" => DateTime.parse(line_match[:time]).to_s,
@@ -218,7 +220,10 @@ class Fluent::RdsPgsqlLogInput < Fluent::Input
         end
       end
       # emit last record
-      Fluent::Engine.emit(@tag, Fluent::Engine.now, record) unless record.nil?
+      unless record.nil?
+        time = record.delete('time')
+        router.emit(@tag, DateTime.parse(time).to_i, record)
+      end
     rescue => e
       $log.warn e.message
     end
